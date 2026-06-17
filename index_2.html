@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌬️ สื่อการเรียนรู้ อากาศและชีวิตของสัตว์ - Motion Tracking</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;600&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--pink:#FF6B9D;--blue:#4ECDC4;--yellow:#FFE66D;--purple:#A18CD1;--orange:#FFB347;--green:#7ED957;--bg:#E8F4FD;--card-shadow:0 8px 32px rgba(0,0,0,0.1);--red:#FF4757}
+  body{font-family:'Kanit',sans-serif;background:var(--bg);overflow-x:hidden;min-height:100vh}
+
+  /* ===== SPLASH ===== */
+  #splash{position:fixed;inset:0;background:linear-gradient(135deg,#56CCF2,#2F80ED);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;color:#fff;text-align:center;padding:2rem}
+  #splash h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;text-shadow:3px 3px 6px rgba(0,0,0,.3)}
+  #splash .subtitle{font-size:clamp(1rem,2.5vw,1.3rem);font-weight:300;opacity:.9;margin-bottom:2rem}
+  .emoji-row{font-size:3rem;margin-bottom:1rem;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+  .instructions-box{background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border-radius:20px;padding:1.5rem 2rem;max-width:500px;margin-bottom:2rem;text-align:left;font-family:'Sarabun',sans-serif;font-size:1.05rem;line-height:1.8}
+  .step{display:flex;align-items:flex-start;gap:10px;margin-bottom:.5rem}
+  .step-num{background:var(--yellow);color:#333;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0;margin-top:2px}
+  .splash-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+  .btn-primary{background:linear-gradient(135deg,var(--yellow),var(--orange));color:#333;border:none;padding:1rem 2.5rem;font-size:1.2rem;font-weight:700;font-family:'Kanit',sans-serif;border-radius:50px;cursor:pointer;box-shadow:0 8px 25px rgba(255,179,71,.4);transition:all .3s}
+  .btn-primary:hover{transform:translateY(-3px) scale(1.05)}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .btn-secondary{background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);padding:1rem 2.5rem;font-size:1.2rem;font-weight:600;font-family:'Kanit',sans-serif;border-radius:50px;cursor:pointer;backdrop-filter:blur(10px);transition:all .3s}
+  .btn-secondary:hover{background:rgba(255,255,255,.35);transform:translateY(-3px)}
+  #cameraStatus{margin-top:1rem;font-size:.95rem;opacity:.8}
+
+  /* ===== EDITOR ===== */
+  #editorScreen{display:none;min-height:100vh;background:var(--bg);padding:1rem}
+  .editor-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;background:#fff;border-radius:16px;box-shadow:var(--card-shadow);margin-bottom:1rem;flex-wrap:wrap;gap:.5rem}
+  .editor-header h2{font-size:1.4rem;font-weight:700;color:#333}
+  .editor-header .btn-group{display:flex;gap:.5rem;flex-wrap:wrap}
+  .btn-sm{padding:.6rem 1.2rem;font-size:.9rem;font-weight:600;font-family:'Kanit',sans-serif;border-radius:12px;cursor:pointer;border:none;transition:all .2s}
+  .btn-sm:hover{transform:translateY(-2px)}
+  .btn-back{background:#eee;color:#555}.btn-back:hover{background:#ddd}
+  .btn-add{background:var(--blue);color:#fff}
+  .btn-export{background:var(--purple);color:#fff}
+  .btn-import{background:var(--orange);color:#fff}
+
+  /* Question list */
+  .q-list{display:flex;flex-direction:column;gap:.8rem;max-width:900px;margin:0 auto}
+  .q-item{background:#fff;border-radius:16px;padding:1rem 1.2rem;box-shadow:0 2px 12px rgba(0,0,0,.06);display:flex;align-items:center;gap:1rem;transition:all .2s}
+  .q-item:hover{box-shadow:0 4px 20px rgba(0,0,0,.1)}
+  .q-num{background:var(--purple);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0}
+  .q-content{flex:1;min-width:0}
+  .q-text{font-size:1rem;font-weight:500;color:#333;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .q-meta{font-size:.8rem;color:#999;font-family:'Sarabun',sans-serif;margin-top:2px}
+  .q-thumb{width:50px;height:50px;object-fit:cover;border-radius:8px;flex-shrink:0}
+  .q-actions{display:flex;gap:.4rem;flex-shrink:0}
+  .btn-icon{width:36px;height:36px;border-radius:10px;border:none;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
+  .btn-icon:hover{transform:scale(1.15)}
+  .btn-edit{background:#E8F5E9;color:#4CAF50}
+  .btn-delete{background:#FFEBEE;color:var(--red)}
+
+  .empty-state{text-align:center;padding:4rem 2rem;color:#999;font-size:1.1rem}
+
+  /* ===== MODAL ===== */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:none;align-items:center;justify-content:center;padding:1rem;overflow-y:auto}
+  .modal-overlay.show{display:flex}
+  .modal{background:#fff;border-radius:20px;width:100%;max-width:650px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:popIn .3s ease-out}
+  @keyframes popIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+  .modal-header{padding:1.2rem 1.5rem;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1;border-radius:20px 20px 0 0}
+  .modal-header h3{font-size:1.2rem;font-weight:700}
+  .modal-close{width:36px;height:36px;border-radius:50%;border:none;background:#f5f5f5;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .modal-body{padding:1.5rem}
+  .modal-footer{padding:1rem 1.5rem;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:.5rem;position:sticky;bottom:0;background:#fff;border-radius:0 0 20px 20px}
+
+  .form-group{margin-bottom:1.2rem}
+  .form-label{display:block;font-size:.9rem;font-weight:600;color:#555;margin-bottom:.4rem}
+  .form-label .optional{font-weight:400;color:#aaa;font-size:.8rem}
+  .form-input,.form-textarea{width:100%;padding:.7rem 1rem;border:2px solid #e8e8e8;border-radius:12px;font-size:1rem;font-family:'Sarabun',sans-serif;transition:border-color .2s;outline:none}
+  .form-input:focus,.form-textarea:focus{border-color:var(--blue)}
+  .form-textarea{resize:vertical;min-height:70px}
+
+  /* Image upload area */
+  .img-upload{border:2px dashed #ddd;border-radius:12px;padding:1rem;text-align:center;cursor:pointer;transition:all .2s;position:relative;min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .img-upload:hover{border-color:var(--blue);background:rgba(78,205,196,.05)}
+  .img-upload.has-image{border-style:solid;border-color:var(--green)}
+  .img-upload input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .img-upload .upload-icon{font-size:1.5rem;margin-bottom:.3rem}
+  .img-upload .upload-text{font-size:.85rem;color:#999;font-family:'Sarabun',sans-serif}
+  .img-preview{max-width:100%;max-height:150px;border-radius:8px;margin-bottom:.5rem;object-fit:contain}
+  .btn-remove-img{background:var(--red);color:#fff;border:none;padding:.3rem .8rem;border-radius:8px;font-size:.75rem;cursor:pointer;font-family:'Kanit',sans-serif;margin-top:.3rem}
+
+  /* Choice editor */
+  .choice-editor{background:#f9f9fb;border-radius:14px;padding:1rem;margin-bottom:.8rem;border:2px solid transparent;transition:all .2s}
+  .choice-editor.is-correct{border-color:var(--green);background:#f0faf0}
+  .choice-head{display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem}
+  .choice-letter{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:#fff;flex-shrink:0}
+  .choice-editor:nth-child(1) .choice-letter{background:var(--pink)}
+  .choice-editor:nth-child(2) .choice-letter{background:var(--blue)}
+  .choice-editor:nth-child(3) .choice-letter{background:var(--purple)}
+  .choice-editor:nth-child(4) .choice-letter{background:var(--orange)}
+  .choice-head label{font-size:.85rem;font-weight:500;flex:1}
+  .correct-radio{accent-color:var(--green);width:18px;height:18px;cursor:pointer}
+  .correct-label{font-size:.8rem;color:var(--green);font-weight:600;cursor:pointer}
+  .choice-fields{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;align-items:start}
+  .choice-fields .form-input{font-size:.9rem;padding:.5rem .8rem}
+  .choice-img-upload{border:2px dashed #ddd;border-radius:10px;padding:.5rem;text-align:center;cursor:pointer;position:relative;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .2s}
+  .choice-img-upload:hover{border-color:var(--blue)}
+  .choice-img-upload.has-image{border-style:solid;border-color:var(--green)}
+  .choice-img-upload input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .choice-img-preview{max-width:100%;max-height:80px;border-radius:6px;object-fit:contain}
+  .choice-img-upload .upload-icon{font-size:1.2rem}
+  .choice-img-upload .upload-text{font-size:.7rem;color:#aaa}
+
+  /* ===== GAME SCREEN ===== */
+  #gameScreen{display:none;width:100vw;height:100vh;position:relative}
+  #videoContainer{position:fixed;inset:0;z-index:0}
+  #webcam{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+  #handCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;transform:scaleX(-1)}
+  #gameOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2}
+  #uiLayer{position:fixed;inset:0;z-index:3;display:flex;flex-direction:column;pointer-events:none}
+  #uiLayer>*{pointer-events:auto}
+  #topBar{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;color:#fff}
+  .score-display,.progress-display{background:rgba(255,255,255,.2);backdrop-filter:blur(10px);padding:.5rem 1.2rem;border-radius:50px;font-size:1rem;font-weight:600}
+  #questionArea{text-align:center;padding:.8rem 1rem;flex-shrink:0}
+  #questionBox{display:inline-block;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-radius:20px;padding:1rem 2rem;box-shadow:var(--card-shadow);max-width:750px}
+  #questionLabel{font-size:.85rem;color:var(--purple);font-weight:600;margin-bottom:.3rem}
+  #questionText{font-size:clamp(1rem,2.5vw,1.4rem);font-weight:600;color:#333;line-height:1.4}
+  #questionImg{max-height:120px;border-radius:12px;margin-top:.5rem;object-fit:contain;display:none}
+  #answersArea{flex:1;position:relative;padding:1rem 1.5rem}
+  .answer-column{position:absolute;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:1.2rem;width:min(26vw,340px)}
+  .answer-column.left{left:2rem}
+  .answer-column.right{right:2rem}
+  .answer-card{background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-radius:18px;padding:1rem 1.2rem;text-align:center;cursor:pointer;transition:all .3s;border:4px solid transparent;box-shadow:0 4px 20px rgba(0,0,0,.15);position:relative;overflow:hidden;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem}
+  .answer-card .answer-emoji{font-size:1.8rem}
+  .answer-card .answer-img{max-height:70px;max-width:90%;border-radius:8px;object-fit:contain}
+  .answer-card .answer-text{font-size:clamp(.9rem,1.8vw,1.1rem);font-weight:500;color:#333}
+  .answer-card .answer-eng{font-size:.75rem;color:#888;font-family:'Sarabun',sans-serif}
+  .answer-card .fill-bar{position:absolute;bottom:0;left:0;height:5px;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:0 0 18px 18px;width:0%;transition:width .1s linear}
+  .answer-card.hovered{border-color:var(--blue);transform:scale(1.05);box-shadow:0 8px 30px rgba(78,205,196,.3)}
+  .answer-card.correct{background:rgba(126,217,87,.95)!important;border-color:var(--green)!important;transform:scale(1.06)}
+  .answer-card.correct .answer-text{color:#fff}
+  .answer-card.correct .answer-eng{color:rgba(255,255,255,.8)}
+  .answer-card.wrong{background:rgba(255,107,157,.9)!important;border-color:var(--pink)!important;animation:shake .5s}
+  .answer-card.wrong .answer-text{color:#fff}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-10px)}80%{transform:translateX(10px)}}
+
+  #handCursor{position:fixed;width:50px;height:50px;border-radius:50%;background:radial-gradient(circle,rgba(255,230,109,.8),rgba(255,179,71,.4));border:3px solid var(--yellow);z-index:100;pointer-events:none;transform:translate(-50%,-50%);display:none;box-shadow:0 0 20px rgba(255,230,109,.5);transition:width .15s,height .15s}
+  #handCursor.selecting{width:65px;height:65px;background:radial-gradient(circle,rgba(78,205,196,.8),rgba(78,205,196,.3));border-color:var(--blue);box-shadow:0 0 30px rgba(78,205,196,.6)}
+
+  #feedbackOverlay{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5)}
+  #feedbackOverlay.show{display:flex}
+  #feedbackBox{background:#fff;border-radius:24px;padding:2rem;text-align:center;max-width:450px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:popIn .3s ease-out}
+  #feedbackEmoji{font-size:3.5rem}
+  #feedbackTitle{font-size:1.6rem;font-weight:700;margin:.4rem 0}
+  #feedbackDesc{font-family:'Sarabun',sans-serif;font-size:.95rem;color:#666;line-height:1.6;margin-bottom:1rem}
+  #feedbackNext{background:linear-gradient(135deg,var(--blue),#45B7AA);color:#fff;border:none;padding:.9rem 2.5rem;font-size:1.1rem;font-weight:700;font-family:'Kanit',sans-serif;border-radius:50px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;min-width:200px}
+  #feedbackNext .next-fill{position:absolute;left:0;top:0;height:100%;width:0%;background:rgba(255,255,255,.3);transition:width .1s linear;border-radius:50px;z-index:0}
+  #feedbackNext .next-label{position:relative;z-index:1}
+  #feedbackNext:hover,#feedbackNext.hovered{transform:scale(1.06);box-shadow:0 8px 25px rgba(78,205,196,.6)}
+
+  #resultsScreen{position:fixed;inset:0;z-index:200;background:linear-gradient(135deg,#56CCF2,#2F80ED);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:2rem}
+  #resultsScreen.show{display:flex}
+  #resultsScreen h1{font-size:2.5rem;font-weight:800}
+  #resultsEmoji{font-size:5rem;margin-bottom:.5rem}
+  #resultsScore{font-size:3.5rem;font-weight:800;color:var(--yellow);text-shadow:0 4px 15px rgba(0,0,0,.3)}
+  #resultsMsg{font-size:1.2rem;opacity:.9;margin:1rem 0 2rem;font-weight:300}
+  #restartBtn{background:linear-gradient(135deg,var(--yellow),var(--orange));color:#333;border:none;padding:1rem 2.5rem;font-size:1.1rem;font-weight:700;font-family:'Kanit',sans-serif;border-radius:50px;cursor:pointer}
+  #backToMenuBtn{background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.4);padding:.8rem 2rem;font-size:1rem;font-weight:600;font-family:'Kanit',sans-serif;border-radius:50px;cursor:pointer;margin-top:.8rem}
+
+  .confetti{position:fixed;width:10px;height:10px;z-index:300;animation:fall 3s linear forwards;pointer-events:none}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+  #mouseHint{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);z-index:10;background:rgba(0,0,0,.6);color:#fff;padding:.5rem 1.2rem;border-radius:30px;font-size:.85rem;font-family:'Sarabun',sans-serif;display:none}
+  #loadingIndicator{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:500;background:rgba(0,0,0,.8);color:#fff;padding:2rem 3rem;border-radius:20px;text-align:center;font-size:1.1rem}
+  .spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,.3);border-top-color:var(--yellow);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* Confirm dialog */
+  .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;display:none;align-items:center;justify-content:center}
+  .confirm-overlay.show{display:flex}
+  .confirm-box{background:#fff;border-radius:20px;padding:2rem;text-align:center;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .confirm-box p{font-size:1.05rem;margin-bottom:1.2rem;color:#333}
+  .confirm-btns{display:flex;gap:.5rem;justify-content:center}
+  .btn-confirm-del{background:var(--red);color:#fff;border:none;padding:.6rem 1.5rem;border-radius:12px;font-size:.95rem;font-weight:600;font-family:'Kanit',sans-serif;cursor:pointer}
+  .btn-confirm-cancel{background:#eee;color:#555;border:none;padding:.6rem 1.5rem;border-radius:12px;font-size:.95rem;font-weight:600;font-family:'Kanit',sans-serif;cursor:pointer}
+
+  /* Stat bar in editor */
+  .stat-bar{display:flex;gap:1rem;justify-content:center;margin-bottom:1rem;flex-wrap:wrap}
+  .stat-chip{background:#fff;padding:.4rem 1rem;border-radius:50px;font-size:.85rem;font-weight:500;color:#666;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .stat-chip b{color:var(--purple)}
+</style>
+</head>
+<body>
+
+<!-- ========== SPLASH ========== -->
+<div id="splash">
+  <div class="emoji-row">🌬️ 💨 ☁️ 🌪️</div>
+  <h1>อากาศและชีวิตของสัตว์</h1>
+  <p class="subtitle">Air and Animal Life — สื่อการเรียนรู้แบบ Motion Tracking (ป.3)</p>
+  <div class="instructions-box">
+    <div class="step"><div class="step-num">1</div><div>กล้องจะจับภาพมือของนักเรียน ยกมือให้กล้องเห็น ✋</div></div>
+    <div class="step"><div class="step-num">2</div><div>ใช้ <b>นิ้วชี้</b> ชี้ไปที่คำตอบ แล้ว <b>ค้างไว้ 1.5 วินาที</b> เพื่อเลือก</div></div>
+    <div class="step"><div class="step-num">3</div><div>ตอบให้ถูกมากที่สุด! แต่ละข้อมีคำอธิบายให้เรียนรู้ 📖</div></div>
+    <div class="step" style="opacity:.7;font-size:.9rem"><div class="step-num" style="background:#ccc">💡</div><div>ถ้าไม่มีกล้อง สามารถใช้เมาส์คลิกเลือกคำตอบได้</div></div>
+  </div>
+  <div class="splash-btns">
+    <button class="btn-primary" id="startBtn" onclick="startGame()">🎮 เริ่มเรียนรู้!</button>
+    <button class="btn-secondary" onclick="openEditor()">📝 จัดการโจทย์</button>
+  </div>
+  <div id="cameraStatus"></div>
+</div>
+
+<!-- ========== EDITOR ========== -->
+<div id="editorScreen">
+  <div class="editor-header">
+    <h2>📝 จัดการโจทย์</h2>
+    <div class="btn-group">
+      <button class="btn-sm btn-add" onclick="openAddModal()">➕ เพิ่มโจทย์</button>
+      <button class="btn-sm btn-export" onclick="exportQuestions()">📤 ส่งออก</button>
+      <button class="btn-sm btn-import" onclick="document.getElementById('importFile').click()">📥 นำเข้า</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importQuestions(event)">
+      <button class="btn-sm btn-back" onclick="closeEditor()">🔙 กลับ</button>
+    </div>
+  </div>
+  <div class="stat-bar">
+    <div class="stat-chip">📋 โจทย์ทั้งหมด: <b id="statTotal">0</b> ข้อ</div>
+    <div class="stat-chip">🎮 จะสุ่มเล่น: <b>10</b> ข้อ/รอบ</div>
+  </div>
+  <div class="q-list" id="qList"></div>
+</div>
+
+<!-- ========== ADD/EDIT MODAL ========== -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">➕ เพิ่มโจทย์ใหม่</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Question text -->
+      <div class="form-group">
+        <label class="form-label">❓ คำถาม</label>
+        <textarea class="form-textarea" id="fQuestion" placeholder="พิมพ์คำถามที่นี่..." rows="2"></textarea>
+      </div>
+      <!-- Question image -->
+      <div class="form-group">
+        <label class="form-label">🖼️ รูปภาพประกอบคำถาม <span class="optional">(ไม่บังคับ)</span></label>
+        <div class="img-upload" id="qImgUpload">
+          <input type="file" accept="image/*" onchange="handleQImage(event)">
+          <div id="qImgPreviewWrap">
+            <div class="upload-icon">📷</div>
+            <div class="upload-text">คลิกหรือลากไฟล์รูปมาวาง</div>
+          </div>
+        </div>
+      </div>
+      <!-- 4 Choices -->
+      <label class="form-label" style="margin-bottom:.6rem">🔤 ตัวเลือก 4 ข้อ <span class="optional">(เลือกข้อที่ถูกต้อง)</span></label>
+      <div id="choicesContainer"></div>
+      <!-- Explanation -->
+      <div class="form-group" style="margin-top:.5rem">
+        <label class="form-label">📖 คำอธิบายเฉลย</label>
+        <textarea class="form-textarea" id="fExplain" placeholder="อธิบายว่าทำไมคำตอบนี้ถึงถูก..." rows="3"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-back" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn-sm btn-add" id="btnSaveQ" onclick="saveQuestion()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== CONFIRM DELETE ========== -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <p>🗑️ ต้องการลบโจทย์ข้อนี้ใช่ไหม?</p>
+    <div class="confirm-btns">
+      <button class="btn-confirm-cancel" onclick="cancelDelete()">ยกเลิก</button>
+      <button class="btn-confirm-del" onclick="confirmDelete()">ลบเลย</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== LOADING ========== -->
+<div id="loadingIndicator"><div class="spinner"></div><div>กำลังโหลดระบบจับมือ...</div></div>
+
+<!-- ========== GAME SCREEN ========== -->
+<div id="gameScreen">
+  <div id="videoContainer"><video id="webcam" autoplay playsinline muted></video><canvas id="handCanvas"></canvas></div>
+  <div id="gameOverlay"></div>
+  <div id="uiLayer">
+    <div id="topBar">
+      <div class="score-display">⭐ คะแนน: <span id="scoreNum">0</span></div>
+      <div class="progress-display">📝 ข้อ <span id="qCurrent">1</span>/<span id="qTotal">10</span></div>
+    </div>
+    <div id="questionArea">
+      <div id="questionBox">
+        <div id="questionLabel">คำถาม</div>
+        <div id="questionText"></div>
+        <img id="questionImg" src="" alt="">
+      </div>
+    </div>
+    <div id="answersArea">
+      <div class="answer-column left">
+        <div class="answer-card" data-idx="0" onclick="selectAnswer(0)"><div class="fill-bar"></div><div class="answer-emoji"></div><img class="answer-img" style="display:none"><div class="answer-text"></div><div class="answer-eng"></div></div>
+        <div class="answer-card" data-idx="1" onclick="selectAnswer(1)"><div class="fill-bar"></div><div class="answer-emoji"></div><img class="answer-img" style="display:none"><div class="answer-text"></div><div class="answer-eng"></div></div>
+      </div>
+      <div class="answer-column right">
+        <div class="answer-card" data-idx="2" onclick="selectAnswer(2)"><div class="fill-bar"></div><div class="answer-emoji"></div><img class="answer-img" style="display:none"><div class="answer-text"></div><div class="answer-eng"></div></div>
+        <div class="answer-card" data-idx="3" onclick="selectAnswer(3)"><div class="fill-bar"></div><div class="answer-emoji"></div><img class="answer-img" style="display:none"><div class="answer-text"></div><div class="answer-eng"></div></div>
+      </div>
+    </div>
+  </div>
+  <div id="handCursor"></div>
+  <div id="mouseHint">🖱️ ใช้เมาส์คลิกเลือกคำตอบได้</div>
+</div>
+
+<!-- ========== FEEDBACK ========== -->
+<div id="feedbackOverlay">
+  <div id="feedbackBox">
+    <div id="feedbackEmoji">✅</div>
+    <div id="feedbackTitle">ถูกต้อง!</div>
+    <div id="feedbackDesc"></div>
+    <button id="feedbackNext" onclick="nextQuestion()"><div class="next-fill"></div><span class="next-label">ข้อถัดไป ➜</span></button>
+  </div>
+</div>
+
+<!-- ========== RESULTS ========== -->
+<div id="resultsScreen">
+  <div id="resultsEmoji">🏆</div>
+  <h1>จบแล้ว!</h1>
+  <div id="resultsScore">0/10</div>
+  <div id="resultsMsg"></div>
+  <button id="restartBtn" onclick="restartGame()">🔄 เล่นอีกครั้ง</button>
+  <button id="backToMenuBtn" onclick="backToMenu()">🏠 กลับหน้าหลัก</button>
+</div>
+
+<!-- MediaPipe -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1675466124/drawing_utils.min.js" crossorigin="anonymous"></script>
+
+<script>
+// ============================================================
+// DEFAULT QUESTIONS - อากาศและชีวิตของสัตว์ (10 ข้อ)
+// ============================================================
+const DEFAULT_QUESTIONS = [
+  {
+    q: "อากาศประกอบด้วยแก๊สชนิดใดมากที่สุด?",
+    img: "",
+    choices: [
+      { text: "ออกซิเจน", eng: "Oxygen", emoji: "🅾️", img: "" },
+      { text: "คาร์บอนไดออกไซด์", eng: "CO₂", emoji: "💨", img: "" },
+      { text: "ไนโตรเจน", eng: "Nitrogen", emoji: "🌬️", img: "" },
+      { text: "ฮีเลียม", eng: "Helium", emoji: "🎈", img: "" }
+    ],
+    correct: 2,
+    explain: "ในอากาศมีแก๊ส \"ไนโตรเจน\" มากที่สุด ถึง 78 ส่วน จาก 100 ส่วน รองลงมาคือ ออกซิเจน 21 ส่วน และแก๊สอื่น ๆ อีก 1 ส่วน"
+  },
+  {
+    q: "ส่วนประกอบของอากาศที่ช่วยในการหายใจคืออะไร?",
+    img: "",
+    choices: [
+      { text: "คาร์บอนไดออกไซด์", eng: "CO₂", emoji: "💨", img: "" },
+      { text: "ออกซิเจน", eng: "Oxygen", emoji: "🫁", img: "" },
+      { text: "ฮีเลียม", eng: "Helium", emoji: "🎈", img: "" },
+      { text: "ไนโตรเจน", eng: "Nitrogen", emoji: "🌬️", img: "" }
+    ],
+    correct: 1,
+    explain: "แก๊ส \"ออกซิเจน\" เป็นแก๊สที่สิ่งมีชีวิตใช้ในการหายใจ เมื่อเราหายใจเข้า ร่างกายจะรับออกซิเจนเข้าไปใช้ในการสร้างพลังงาน"
+  },
+  {
+    q: "สิ่งมีชีวิตต้องการแก๊สออกซิเจนเพื่อทำอะไร?",
+    img: "",
+    choices: [
+      { text: "ใช้หายใจ", eng: "Breathing", emoji: "🫁", img: "" },
+      { text: "ใช้ทำอาหาร", eng: "Cooking", emoji: "🍳", img: "" },
+      { text: "ใช้สร้างพลังงานแสง", eng: "", emoji: "💡", img: "" },
+      { text: "ใช้ผลิตไนโตรเจน", eng: "", emoji: "⚗️", img: "" }
+    ],
+    correct: 0,
+    explain: "สิ่งมีชีวิต เช่น คน สัตว์ และพืช ต้องใช้แก๊สออกซิเจนในการ \"หายใจ\" เพื่อดำรงชีวิต ถ้าขาดออกซิเจนสิ่งมีชีวิตจะไม่สามารถอยู่ได้"
+  },
+  {
+    q: "สิ่งใดต่อไปนี้ไม่ได้เป็นส่วนประกอบของอากาศ?",
+    img: "",
+    choices: [
+      { text: "ออกซิเจน", eng: "Oxygen", emoji: "🅾️", img: "" },
+      { text: "น้ำ", eng: "Water", emoji: "💧", img: "" },
+      { text: "คาร์บอนไดออกไซด์", eng: "CO₂", emoji: "💨", img: "" },
+      { text: "ไนโตรเจน", eng: "Nitrogen", emoji: "🌬️", img: "" }
+    ],
+    correct: 1,
+    explain: "อากาศประกอบด้วยแก๊สต่าง ๆ เช่น ออกซิเจน ไนโตรเจน คาร์บอนไดออกไซด์ และมี \"ไอน้ำ\" (ในรูปแบบแก๊ส) แต่ \"น้ำ\" ที่เป็นของเหลวไม่ใช่ส่วนประกอบของอากาศ"
+  },
+  {
+    q: "ถ้าต้องเดินผ่านบริเวณที่มีควันและฝุ่นละอองมาก เราควรทำอย่างไร?",
+    img: "",
+    choices: [
+      { text: "เดินก้มหน้า", eng: "", emoji: "🚶", img: "" },
+      { text: "วิ่งผ่านให้เร็วที่สุด", eng: "", emoji: "🏃", img: "" },
+      { text: "ใช้ผ้าปิดจมูกและปาก", eng: "", emoji: "😷", img: "" },
+      { text: "เดินไปพูดไป", eng: "", emoji: "🗣️", img: "" }
+    ],
+    correct: 2,
+    explain: "การใช้ผ้าหรือหน้ากากปิดจมูกและปาก ช่วยกรองฝุ่นและควันไม่ให้เข้าสู่ระบบทางเดินหายใจ ป้องกันอันตรายต่อปอดและสุขภาพ"
+  },
+  {
+    q: "บริเวณใดที่มีอากาศดี?",
+    img: "",
+    choices: [
+      { text: "สวนสาธารณะ", eng: "Park", emoji: "🌳", img: "" },
+      { text: "ร้านอาหาร", eng: "Restaurant", emoji: "🍜", img: "" },
+      { text: "โรงภาพยนตร์", eng: "Cinema", emoji: "🎬", img: "" },
+      { text: "ห้างสรรพสินค้า", eng: "Shopping Mall", emoji: "🏬", img: "" }
+    ],
+    correct: 0,
+    explain: "\"สวนสาธารณะ\" มีต้นไม้จำนวนมาก ต้นไม้ช่วยฟอกอากาศและคายแก๊สออกซิเจน ทำให้อากาศบริเวณนั้นบริสุทธิ์และสดชื่น"
+  },
+  {
+    q: "แก๊สชนิดใดในอากาศที่ทำให้เกิดกระบวนการเผาไหม้เพื่อให้ความร้อน?",
+    img: "",
+    choices: [
+      { text: "แก๊สไนโตรเจน", eng: "Nitrogen", emoji: "🌬️", img: "" },
+      { text: "แก๊สคาร์บอนไดออกไซด์", eng: "CO₂", emoji: "💨", img: "" },
+      { text: "แก๊สออกซิเจน", eng: "Oxygen", emoji: "🔥", img: "" },
+      { text: "ไอน้ำ", eng: "Water Vapor", emoji: "💧", img: "" }
+    ],
+    correct: 2,
+    explain: "แก๊ส \"ออกซิเจน\" เป็นแก๊สที่ช่วยให้เกิดการเผาไหม้ ถ้าไม่มีออกซิเจน ไฟจะดับ การจุดไฟต้องมีออกซิเจนจากอากาศเสมอ"
+  },
+  {
+    q: "ในอากาศมีแก๊สไนโตรเจนผสมอยู่เท่าไร?",
+    img: "",
+    choices: [
+      { text: "21 %", eng: "", emoji: "2️⃣", img: "" },
+      { text: "40 %", eng: "", emoji: "4️⃣", img: "" },
+      { text: "75 %", eng: "", emoji: "7️⃣", img: "" },
+      { text: "78 %", eng: "", emoji: "✅", img: "" }
+    ],
+    correct: 3,
+    explain: "อากาศประกอบด้วย แก๊สไนโตรเจน 78% (78 ส่วนใน 100 ส่วน) แก๊สออกซิเจน 21% และแก๊สคาร์บอนไดออกไซด์รวมกับแก๊สอื่น ๆ อีก 1%"
+  },
+  {
+    q: "กระบวนการใดที่ทำให้เกิดอากาศบริสุทธิ์?",
+    img: "",
+    choices: [
+      { text: "การเผาขยะ", eng: "", emoji: "🔥", img: "" },
+      { text: "การใช้รถยนต์จำนวนมาก", eng: "", emoji: "🚗", img: "" },
+      { text: "การเผาไหม้เชื้อเพลิง", eng: "", emoji: "⛽", img: "" },
+      { text: "การปลูกต้นไม้", eng: "", emoji: "🌳", img: "" }
+    ],
+    correct: 3,
+    explain: "\"การปลูกต้นไม้\" ช่วยทำให้อากาศบริสุทธิ์ เพราะต้นไม้ดูดซับแก๊สคาร์บอนไดออกไซด์และคายแก๊สออกซิเจนออกมา ส่วนการเผาและการใช้รถยนต์มากจะปล่อยมลพิษสู่อากาศ"
+  },
+  {
+    q: "การกระทำข้อใดช่วยลดมลพิษในอากาศได้?",
+    img: "",
+    choices: [
+      { text: "เผาขยะทุกวัน", eng: "", emoji: "🔥", img: "" },
+      { text: "ใช้จักรยานแทนรถยนต์", eng: "", emoji: "🚴", img: "" },
+      { text: "ใช้พลาสติกมากขึ้น", eng: "", emoji: "🛍️", img: "" },
+      { text: "เผาป่าเพื่อทำไร่", eng: "", emoji: "🌲", img: "" }
+    ],
+    correct: 1,
+    explain: "การ \"ใช้จักรยานแทนรถยนต์\" ช่วยลดควันและมลพิษจากการเผาไหม้น้ำมัน เป็นวิธีรักษาอากาศที่บริสุทธิ์ และยังได้ออกกำลังกายด้วย"
+  }
+];
+
+// ============================================================
+// DATA MANAGEMENT
+// ============================================================
+const STORAGE_KEY = 'motiontrack_air_questions_v2';
+
+function loadQuestions() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+}
+
+function saveQuestions(data) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+let allQuestions = loadQuestions();
+
+// ============================================================
+// EDITOR UI
+// ============================================================
+let editingIndex = -1;
+let deleteIndex = -1;
+let qImageData = '';
+let choiceImages = ['','','',''];
+
+function openEditor() {
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('editorScreen').style.display = 'block';
+  document.body.style.overflow = 'auto';
+  renderQuestionList();
+}
+
+function closeEditor() {
+  document.getElementById('editorScreen').style.display = 'none';
+  document.getElementById('splash').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function renderQuestionList() {
+  const list = document.getElementById('qList');
+  document.getElementById('statTotal').textContent = allQuestions.length;
+
+  if (allQuestions.length === 0) {
+    list.innerHTML = '<div class="empty-state">📭 ยังไม่มีโจทย์ กด "➕ เพิ่มโจทย์" เพื่อเริ่มสร้าง</div>';
+    return;
+  }
+
+  list.innerHTML = allQuestions.map((q, i) => {
+    const hasImg = q.img ? `<img class="q-thumb" src="${q.img}" alt="">` : '';
+    const correctText = q.choices[q.correct]?.text || '?';
+    return `<div class="q-item">
+      <div class="q-num">${i+1}</div>
+      ${hasImg}
+      <div class="q-content">
+        <div class="q-text">${escHtml(q.q)}</div>
+        <div class="q-meta">✅ ${escHtml(correctText)} · ตัวเลือก ${q.choices.length} ข้อ</div>
+      </div>
+      <div class="q-actions">
+        <button class="btn-icon btn-edit" onclick="openEditModal(${i})" title="แก้ไข">✏️</button>
+        <button class="btn-icon btn-delete" onclick="askDelete(${i})" title="ลบ">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function buildChoiceEditors() {
+  const c = document.getElementById('choicesContainer');
+  const letters = ['ก','ข','ค','ง'];
+  c.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    const div = document.createElement('div');
+    div.className = 'choice-editor' + (editingIndex >= 0 && allQuestions[editingIndex]?.correct === i ? ' is-correct' : (editingIndex < 0 && i === 0 ? ' is-correct' : ''));
+    div.id = `choiceEditor${i}`;
+    div.innerHTML = `
+      <div class="choice-head">
+        <div class="choice-letter">${letters[i]}</div>
+        <label style="flex:1">ตัวเลือกที่ ${i+1}</label>
+        <input type="radio" name="correctAnswer" class="correct-radio" value="${i}" ${getChecked(i)} onchange="updateCorrectHighlight()">
+        <label class="correct-label" onclick="this.previousElementSibling.click()">คำตอบถูก</label>
+      </div>
+      <div class="choice-fields">
+        <div>
+          <input class="form-input" id="fChoiceText${i}" placeholder="ข้อความตัวเลือก">
+          <input class="form-input" id="fChoiceEng${i}" placeholder="ภาษาอังกฤษ (ไม่บังคับ)" style="margin-top:.4rem;font-size:.85rem">
+          <input class="form-input" id="fChoiceEmoji${i}" placeholder="Emoji (เช่น 🌬️)" style="margin-top:.4rem;font-size:.85rem" maxlength="4">
+        </div>
+        <div class="choice-img-upload ${choiceImages[i]?'has-image':''}" id="choiceImgUpload${i}">
+          <input type="file" accept="image/*" onchange="handleChoiceImage(event,${i})">
+          <div id="choiceImgWrap${i}">
+            ${choiceImages[i] ? `<img class="choice-img-preview" src="${choiceImages[i]}"><br><button class="btn-remove-img" onclick="event.stopPropagation();removeChoiceImg(${i})">✕ ลบรูป</button>` : '<div class="upload-icon">📷</div><div class="upload-text">เพิ่มรูป</div>'}
+          </div>
+        </div>
+      </div>`;
+    c.appendChild(div);
+  }
+}
+
+function getChecked(i) {
+  if (editingIndex >= 0) return allQuestions[editingIndex].correct === i ? 'checked' : '';
+  return i === 0 ? 'checked' : '';
+}
+
+function updateCorrectHighlight() {
+  const radios = document.querySelectorAll('input[name="correctAnswer"]');
+  radios.forEach((r,i) => {
+    document.getElementById(`choiceEditor${i}`).classList.toggle('is-correct', r.checked);
+  });
+}
+
+function openAddModal() {
+  editingIndex = -1;
+  qImageData = '';
+  choiceImages = ['','','',''];
+  document.getElementById('modalTitle').textContent = '➕ เพิ่มโจทย์ใหม่';
+  document.getElementById('fQuestion').value = '';
+  document.getElementById('fExplain').value = '';
+  resetQImageUI();
+  buildChoiceEditors();
+  for(let i=0;i<4;i++){
+    document.getElementById(`fChoiceText${i}`).value='';
+    document.getElementById(`fChoiceEng${i}`).value='';
+    document.getElementById(`fChoiceEmoji${i}`).value='';
+  }
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function openEditModal(idx) {
+  editingIndex = idx;
+  const q = allQuestions[idx];
+  qImageData = q.img || '';
+  choiceImages = q.choices.map(c => c.img || '');
+  while(choiceImages.length < 4) choiceImages.push('');
+
+  document.getElementById('modalTitle').textContent = '✏️ แก้ไขโจทย์ข้อ ' + (idx+1);
+  document.getElementById('fQuestion').value = q.q;
+  document.getElementById('fExplain').value = q.explain;
+
+  const wrap = document.getElementById('qImgPreviewWrap');
+  const upArea = document.getElementById('qImgUpload');
+  if (qImageData) {
+    upArea.classList.add('has-image');
+    wrap.innerHTML = `<img class="img-preview" src="${qImageData}"><br><button class="btn-remove-img" onclick="event.stopPropagation();removeQImage()">✕ ลบรูป</button>`;
+  } else { resetQImageUI(); }
+
+  buildChoiceEditors();
+  for(let i=0;i<4;i++){
+    document.getElementById(`fChoiceText${i}`).value = q.choices[i]?.text || '';
+    document.getElementById(`fChoiceEng${i}`).value = q.choices[i]?.eng || '';
+    document.getElementById(`fChoiceEmoji${i}`).value = q.choices[i]?.emoji || '';
+  }
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+function resetQImageUI() {
+  const wrap = document.getElementById('qImgPreviewWrap');
+  const upArea = document.getElementById('qImgUpload');
+  upArea.classList.remove('has-image');
+  wrap.innerHTML = '<div class="upload-icon">📷</div><div class="upload-text">คลิกหรือลากไฟล์รูปมาวาง</div>';
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+async function handleQImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  qImageData = await fileToBase64(file);
+  const wrap = document.getElementById('qImgPreviewWrap');
+  const upArea = document.getElementById('qImgUpload');
+  upArea.classList.add('has-image');
+  wrap.innerHTML = `<img class="img-preview" src="${qImageData}"><br><button class="btn-remove-img" onclick="event.stopPropagation();removeQImage()">✕ ลบรูป</button>`;
+}
+
+function removeQImage() {
+  qImageData = '';
+  resetQImageUI();
+  document.querySelector('#qImgUpload input[type=file]').value = '';
+}
+
+async function handleChoiceImage(e, idx) {
+  const file = e.target.files[0];
+  if (!file) return;
+  choiceImages[idx] = await fileToBase64(file);
+  const wrap = document.getElementById(`choiceImgWrap${idx}`);
+  const upArea = document.getElementById(`choiceImgUpload${idx}`);
+  upArea.classList.add('has-image');
+  wrap.innerHTML = `<img class="choice-img-preview" src="${choiceImages[idx]}"><br><button class="btn-remove-img" onclick="event.stopPropagation();removeChoiceImg(${idx})">✕ ลบรูป</button>`;
+}
+
+function removeChoiceImg(idx) {
+  choiceImages[idx] = '';
+  const wrap = document.getElementById(`choiceImgWrap${idx}`);
+  const upArea = document.getElementById(`choiceImgUpload${idx}`);
+  upArea.classList.remove('has-image');
+  wrap.innerHTML = '<div class="upload-icon">📷</div><div class="upload-text">เพิ่มรูป</div>';
+  const inp = upArea.querySelector('input[type=file]');
+  if(inp) inp.value = '';
+}
+
+function saveQuestion() {
+  const qText = document.getElementById('fQuestion').value.trim();
+  const explain = document.getElementById('fExplain').value.trim();
+
+  if (!qText) { alert('กรุณาพิมพ์คำถาม'); return; }
+
+  const choices = [];
+  for (let i = 0; i < 4; i++) {
+    const text = document.getElementById(`fChoiceText${i}`).value.trim();
+    if (!text) { alert(`กรุณาพิมพ์ตัวเลือกที่ ${i+1}`); return; }
+    choices.push({
+      text,
+      eng: document.getElementById(`fChoiceEng${i}`).value.trim(),
+      emoji: document.getElementById(`fChoiceEmoji${i}`).value.trim() || '📌',
+      img: choiceImages[i] || ''
+    });
+  }
+
+  const correctRadio = document.querySelector('input[name="correctAnswer"]:checked');
+  const correct = correctRadio ? parseInt(correctRadio.value) : 0;
+
+  const qObj = { q: qText, img: qImageData, choices, correct, explain };
+
+  if (editingIndex >= 0) {
+    allQuestions[editingIndex] = qObj;
+  } else {
+    allQuestions.push(qObj);
+  }
+
+  saveQuestions(allQuestions);
+  closeModal();
+  renderQuestionList();
+}
+
+function askDelete(idx) {
+  deleteIndex = idx;
+  document.getElementById('confirmOverlay').classList.add('show');
+}
+function cancelDelete() {
+  document.getElementById('confirmOverlay').classList.remove('show');
+}
+function confirmDelete() {
+  allQuestions.splice(deleteIndex, 1);
+  saveQuestions(allQuestions);
+  document.getElementById('confirmOverlay').classList.remove('show');
+  renderQuestionList();
+}
+
+function exportQuestions() {
+  const json = JSON.stringify(allQuestions, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'โจทย์อากาศและชีวิตของสัตว์.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importQuestions(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!Array.isArray(data)) throw new Error();
+      data.forEach(q => {
+        if (!q.q || !Array.isArray(q.choices)) throw new Error();
+      });
+      if (confirm(`พบ ${data.length} ข้อ ต้องการเพิ่มต่อท้ายโจทย์เดิม หรือแทนที่ทั้งหมด?\n\nกด OK = แทนที่ทั้งหมด\nกด Cancel = เพิ่มต่อท้าย`)) {
+        allQuestions = data;
+      } else {
+        allQuestions = allQuestions.concat(data);
+      }
+      saveQuestions(allQuestions);
+      renderQuestionList();
+      alert('✅ นำเข้าสำเร็จ!');
+    } catch(err) {
+      alert('❌ ไฟล์ไม่ถูกรูปแบบ กรุณาใช้ไฟล์ JSON ที่ส่งออกจากระบบนี้');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ============================================================
+// GAME STATE
+// ============================================================
+let questions = [];
+let currentQ = 0;
+let score = 0;
+let isAnswering = false;
+let handTrackingReady = false;
+let useMouseMode = false;
+let hoveredCard = -1;
+let hoverStartTime = 0;
+const HOVER_DURATION = 1500;
+let handX = 0.5, handY = 0.5;
+let handVisible = false;
+let nextBtnHovered = false;
+let nextBtnHoverStart = 0;
+let transitionLock = false;
+
+// ============================================================
+// MEDIAPIPE
+// ============================================================
+let mpHands = null;
+let mpCamera = null;
+const videoEl = document.getElementById('webcam');
+const canvasEl = document.getElementById('handCanvas');
+const canvasCtx = canvasEl.getContext('2d');
+
+async function initHandTracking() {
+  try {
+    document.getElementById('loadingIndicator').style.display = 'block';
+    mpHands = new Hands({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${f}` });
+    mpHands.setOptions({ maxNumHands:1, modelComplexity:0, minDetectionConfidence:0.6, minTrackingConfidence:0.5 });
+    mpHands.onResults(onHandResults);
+    const stream = await navigator.mediaDevices.getUserMedia({ video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}} });
+    videoEl.srcObject = stream;
+    await videoEl.play();
+    canvasEl.width = videoEl.videoWidth||1280;
+    canvasEl.height = videoEl.videoHeight||720;
+    mpCamera = new Camera(videoEl, { onFrame: async()=>{ await mpHands.send({image:videoEl}); }, width:1280, height:720 });
+    await mpCamera.start();
+    handTrackingReady = true;
+    document.getElementById('loadingIndicator').style.display = 'none';
+    document.getElementById('cameraStatus').textContent = '✅ กล้องพร้อมแล้ว!';
+    document.getElementById('cameraStatus').style.color = '#7ED957';
+  } catch(err) {
+    console.warn('Hand tracking init failed:', err);
+    document.getElementById('loadingIndicator').style.display = 'none';
+    document.getElementById('cameraStatus').innerHTML = '⚠️ ไม่สามารถเปิดกล้องได้ — ใช้โหมดเมาส์แทน';
+    document.getElementById('cameraStatus').style.color = '#FFE66D';
+    useMouseMode = true;
+  }
+}
+
+function onHandResults(results) {
+  canvasCtx.save();
+  canvasCtx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+  if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+    const lm = results.multiHandLandmarks[0];
+    drawConnectors(canvasCtx, lm, HAND_CONNECTIONS, {color:'rgba(255,230,109,.6)',lineWidth:3});
+    drawLandmarks(canvasCtx, lm, {color:'rgba(78,205,196,.8)',lineWidth:1,radius:4});
+    const tip = lm[8];
+    handX = tip.x; handY = tip.y; handVisible = true;
+    const sx = (1-handX)*window.innerWidth, sy = handY*window.innerHeight;
+    updateCursor(sx,sy,true);
+    // If feedback is showing, check the next button; otherwise check answer cards
+    const overlay = document.getElementById('feedbackOverlay');
+    if (overlay.classList.contains('show')) {
+      checkNextBtnHover(sx, sy);
+    } else {
+      checkCardHover(sx, sy);
+    }
+  } else {
+    handVisible = false; updateCursor(0,0,false); resetHover(); resetNextBtnHover();
+  }
+  canvasCtx.restore();
+}
+
+const cursorEl = document.getElementById('handCursor');
+function updateCursor(x,y,vis) {
+  if(vis){cursorEl.style.display='block';cursorEl.style.left=x+'px';cursorEl.style.top=y+'px'}
+  else{cursorEl.style.display='none'}
+}
+function checkCardHover(x,y) {
+  if(isAnswering || transitionLock)return;
+  const cards = document.querySelectorAll('.answer-card');
+  let found=-1;
+  cards.forEach((c,i)=>{const r=c.getBoundingClientRect();if(x>=r.left-10&&x<=r.right+10&&y>=r.top-10&&y<=r.bottom+10)found=i});
+  if(found!==hoveredCard){resetHover();hoveredCard=found;if(found>=0){hoverStartTime=Date.now();cards[found].classList.add('hovered');cursorEl.classList.add('selecting')}else{cursorEl.classList.remove('selecting')}}
+  else if(found>=0){const el=Date.now()-hoverStartTime;const pct=Math.min(100,(el/HOVER_DURATION)*100);cards[found].querySelector('.fill-bar').style.width=pct+'%';if(el>=HOVER_DURATION){selectAnswer(found);resetHover()}}
+}
+function resetHover(){document.querySelectorAll('.answer-card').forEach(c=>{c.classList.remove('hovered');c.querySelector('.fill-bar').style.width='0%'});hoveredCard=-1;cursorEl.classList.remove('selecting')}
+
+function checkNextBtnHover(x, y) {
+  if(transitionLock) return;
+  const btn = document.getElementById('feedbackNext');
+  if(!btn) return;
+  const fillEl = btn.querySelector('.next-fill');
+  if(!fillEl) return; // ป้องกันถ้า fill bar หายไป
+  const r = btn.getBoundingClientRect();
+  const isHovering = x>=r.left-20 && x<=r.right+20 && y>=r.top-20 && y<=r.bottom+20;
+  if(isHovering !== nextBtnHovered) {
+    if(isHovering) {
+      nextBtnHovered = true;
+      nextBtnHoverStart = Date.now();
+      btn.classList.add('hovered');
+      cursorEl.classList.add('selecting');
+    } else {
+      resetNextBtnHover();
+    }
+  } else if(isHovering) {
+    const el = Date.now() - nextBtnHoverStart;
+    const pct = Math.min(100, (el/HOVER_DURATION)*100);
+    fillEl.style.width = pct + '%';
+    if(el >= HOVER_DURATION) {
+      resetNextBtnHover();
+      nextQuestion();
+    }
+  }
+}
+function resetNextBtnHover() {
+  nextBtnHovered = false;
+  const btn = document.getElementById('feedbackNext');
+  if(btn) {
+    btn.classList.remove('hovered');
+    const fill = btn.querySelector('.next-fill');
+    if(fill) fill.style.width = '0%';
+  }
+  cursorEl.classList.remove('selecting');
+}
+
+// ============================================================
+// GAME LOGIC
+// ============================================================
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function startGame() {
+  allQuestions = loadQuestions();
+  if(allQuestions.length === 0){alert('ยังไม่มีโจทย์! กรุณาเพิ่มโจทย์ก่อน');return}
+  const pool = JSON.parse(JSON.stringify(allQuestions));
+  questions = shuffle(pool).slice(0, Math.min(10, pool.length));
+  questions.forEach(q=>{const cc=q.choices[q.correct];shuffle(q.choices);q.correct=q.choices.indexOf(cc)});
+  currentQ=0;score=0;
+  document.getElementById('qTotal').textContent=questions.length;
+  document.getElementById('splash').style.display='none';
+  document.getElementById('editorScreen').style.display='none';
+  document.getElementById('gameScreen').style.display='block';
+  document.body.style.overflow='hidden';
+  if(useMouseMode||!handTrackingReady){document.getElementById('mouseHint').style.display='block';if(!handTrackingReady){document.getElementById('videoContainer').style.display='none';document.getElementById('gameOverlay').style.background='linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)'}}
+  showQuestion();
+}
+
+function showQuestion() {
+  isAnswering=false;
+  const q=questions[currentQ];
+  document.getElementById('qCurrent').textContent=currentQ+1;
+  document.getElementById('scoreNum').textContent=score;
+  document.getElementById('questionLabel').textContent=`คำถามข้อ ${currentQ+1}`;
+  document.getElementById('questionText').textContent=q.q;
+
+  const qImg = document.getElementById('questionImg');
+  if(q.img){qImg.src=q.img;qImg.style.display='block'}else{qImg.style.display='none'}
+
+  const cards=document.querySelectorAll('.answer-card');
+  cards.forEach((card,idx)=>{
+    card.className='answer-card';
+    const ch=q.choices[idx];
+    card.querySelector('.answer-emoji').textContent=ch.img?'':ch.emoji;
+    const imgEl=card.querySelector('.answer-img');
+    if(ch.img){imgEl.src=ch.img;imgEl.style.display='block'}else{imgEl.style.display='none'}
+    card.querySelector('.answer-text').textContent=ch.text;
+    card.querySelector('.answer-eng').textContent=ch.eng||'';
+    card.querySelector('.fill-bar').style.width='0%';
+  });
+}
+
+function selectAnswer(idx) {
+  if(isAnswering)return;
+  isAnswering=true;resetHover();
+  const q=questions[currentQ];
+  const cards=document.querySelectorAll('.answer-card');
+  const ok=idx===q.correct;
+  if(ok){score++;cards[idx].classList.add('correct');document.getElementById('feedbackEmoji').textContent='🎉';document.getElementById('feedbackTitle').textContent='ถูกต้อง!';document.getElementById('feedbackTitle').style.color='#7ED957';spawnMini()}
+  else{cards[idx].classList.add('wrong');cards[q.correct].classList.add('correct');document.getElementById('feedbackEmoji').textContent='😅';document.getElementById('feedbackTitle').textContent='ยังไม่ถูกนะ';document.getElementById('feedbackTitle').style.color='var(--pink)'}
+  document.getElementById('feedbackDesc').textContent=q.explain||'';
+  document.getElementById('scoreNum').textContent=score;
+  setTimeout(()=>{document.querySelector('#feedbackNext .next-label').textContent=currentQ>=questions.length-1?'🏁 ดูผลคะแนน':'ข้อถัดไป ➜';document.getElementById('feedbackOverlay').classList.add('show')},600);
+}
+
+function nextQuestion(){resetNextBtnHover();resetHover();transitionLock=true;setTimeout(()=>{transitionLock=false},500);document.getElementById('feedbackOverlay').classList.remove('show');currentQ++;if(currentQ>=questions.length)showResults();else showQuestion()}
+
+function showResults(){
+  document.getElementById('gameScreen').style.display='none';
+  const t=questions.length,p=score/t;
+  document.getElementById('resultsScore').textContent=`${score} / ${t}`;
+  if(p>=.9){document.getElementById('resultsEmoji').textContent='🏆';document.getElementById('resultsMsg').textContent='เก่งมาก! เชี่ยวชาญเรื่องอากาศและชีวิตของสัตว์แล้ว!'}
+  else if(p>=.7){document.getElementById('resultsEmoji').textContent='🌟';document.getElementById('resultsMsg').textContent='ดีมาก! อีกนิดเดียวก็เต็มแล้ว!'}
+  else if(p>=.5){document.getElementById('resultsEmoji').textContent='💪';document.getElementById('resultsMsg').textContent='พอใช้ได้! ลองทบทวนแล้วเล่นอีกครั้ง'}
+  else{document.getElementById('resultsEmoji').textContent='📖';document.getElementById('resultsMsg').textContent='ลองกลับไปอ่านเนื้อหาแล้วมาเล่นใหม่นะ!'}
+  document.getElementById('resultsScreen').classList.add('show');
+  if(p>=.7)spawnConfetti();
+}
+
+function restartGame(){document.getElementById('resultsScreen').classList.remove('show');document.getElementById('gameScreen').style.display='block';const pool=JSON.parse(JSON.stringify(allQuestions));questions=shuffle(pool).slice(0,Math.min(10,pool.length));questions.forEach(q=>{const cc=q.choices[q.correct];shuffle(q.choices);q.correct=q.choices.indexOf(cc)});currentQ=0;score=0;document.getElementById('scoreNum').textContent=0;showQuestion()}
+
+function backToMenu(){document.getElementById('resultsScreen').classList.remove('show');document.getElementById('gameScreen').style.display='none';document.getElementById('splash').style.display='flex';document.body.style.overflow='hidden'}
+
+// ============================================================
+// CONFETTI
+// ============================================================
+function spawnConfetti(){const cl=['#FF6B9D','#4ECDC4','#FFE66D','#A18CD1','#FFB347','#7ED957'];for(let i=0;i<60;i++){setTimeout(()=>{const e=document.createElement('div');e.className='confetti';e.style.left=Math.random()*100+'vw';e.style.top='-10px';e.style.background=cl[Math.floor(Math.random()*cl.length)];e.style.borderRadius=Math.random()>.5?'50%':'2px';e.style.width=(6+Math.random()*8)+'px';e.style.height=(6+Math.random()*8)+'px';e.style.animationDuration=(2+Math.random()*2)+'s';document.body.appendChild(e);setTimeout(()=>e.remove(),4000)},i*40)}}
+function spawnMini(){const cl=['#7ED957','#FFE66D','#4ECDC4'];for(let i=0;i<15;i++){const e=document.createElement('div');e.className='confetti';e.style.left=(30+Math.random()*40)+'vw';e.style.top='-10px';e.style.background=cl[Math.floor(Math.random()*cl.length)];e.style.borderRadius='50%';e.style.width='8px';e.style.height='8px';e.style.animationDuration=(1.5+Math.random()*1.5)+'s';document.body.appendChild(e);setTimeout(()=>e.remove(),3000)}}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => { initHandTracking(); });
+</script>
+</body>
+</html>
